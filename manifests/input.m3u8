@@ -1,15 +1,15 @@
 #EXTM3U
 #EXT-X-VERSION:3
 #EXT-X-TARGETDURATION:10
-#EXT-X-MEDIA-SEQUENCE:31
+#EXT-X-MEDIA-SEQUENCE:34
 
-#EXTINF:10.0,
-/media/1080p/segment_032.ts
-#EXTINF:10.0,
-/media/1080p/segment_033.ts
-#EXTINF:10.0,
-/media/1080p/segment_034.ts
 #EXTINF:10.0,
 /media/1080p/segment_035.ts
 #EXTINF:10.0,
 /media/1080p/segment_036.ts
+#EXTINF:10.0,
+/media/1080p/segment_037.ts
+#EXTINF:10.0,
+/media/1080p/segment_038.ts
+#EXTINF:10.0,
+/media/1080p/segment_039.ts
