@@ -1,0 +1,5 @@
+apiVersion: v2
+name: livehls
+description: A Helm chart for Live HLS Server
+version: 0.1.0
+appVersion: "1.0.0" 

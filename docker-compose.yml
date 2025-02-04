@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  hls-server:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./media:/app/media
+      - ./ads:/app/ads
+      - ./manifests:/app/manifests
+      - ./config:/app/config
+    environment:
+      - GO_ENV=production
+    restart: unless-stopped 

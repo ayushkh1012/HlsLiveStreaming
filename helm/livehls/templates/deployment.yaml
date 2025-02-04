@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-livehls
+  labels:
+    app: livehls
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: livehls
+  template:
+    metadata:
+      labels:
+        app: livehls
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: media
+              mountPath: {{ .Values.volumes.media.path }}
+            - name: ads
+              mountPath: {{ .Values.volumes.ads.path }}
+            - name: manifests
+              mountPath: {{ .Values.volumes.manifests.path }}
+            - name: config
+              mountPath: {{ .Values.volumes.config.path }}
+      volumes:
+        - name: media
+          emptyDir: {}
+        - name: ads
+          emptyDir: {}
+        - name: manifests
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}-config 
