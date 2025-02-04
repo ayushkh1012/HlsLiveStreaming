@@ -1,0 +1,15 @@
+server:
+  host: "localhost"
+  port: 8080
+  window_size: 5  # Number of segments in the moving window
+
+paths:
+  media: "./media"
+  ads: "./ads"
+  manifests: "./manifests"
+
+ads:
+  - id: "adv1"
+    duration: 30  # Duration in seconds
+  - id: "adv2"
+    duration: 45
