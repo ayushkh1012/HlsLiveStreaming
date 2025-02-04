@@ -6,6 +6,7 @@ import (
     "livehls/utils"
     "log"
     "net/http"
+    "path/filepath"
 )
 
 func main() {
@@ -17,15 +18,14 @@ func main() {
 
     logger := utils.NewLogger()
 
-    // Initialize manifest handler
+    // Initialize manifest handler with live streaming
     manifestHandler := manifest.NewManifestHandler("manifests/input.m3u8")
-    manifestHandler.Start()
+    manifestHandler.Start() // Start the live manifest updates
 
-    // Set up HTTP server
-    // Static file handlers
-    http.Handle("/media/", http.StripPrefix("/media/", http.FileServer(http.Dir(config.Paths.Media))))
-    http.Handle("/ads/", http.StripPrefix("/ads/", http.FileServer(http.Dir(config.Paths.Ads))))
-    http.Handle("/manifests/", http.StripPrefix("/manifests/", http.FileServer(http.Dir(config.Paths.Manifests))))
+    // Set up HTTP server with live streaming headers
+    http.Handle("/media/", addLiveHeaders(http.StripPrefix("/media/", http.FileServer(http.Dir(config.Paths.Media)))))
+    http.Handle("/ads/", addLiveHeaders(http.StripPrefix("/ads/", http.FileServer(http.Dir(config.Paths.Ads)))))
+    http.Handle("/manifests/", addLiveHeaders(http.StripPrefix("/manifests/", http.FileServer(http.Dir(config.Paths.Manifests)))))
 
     // Root handler
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -61,4 +61,21 @@ func main() {
     if err := http.ListenAndServe(addr, nil); err != nil {
         logger.Fatalf("Server failed: %v", err)
     }
+}
+
+func addLiveHeaders(handler http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Set("Access-Control-Allow-Origin", "*")
+        w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+        w.Header().Set("Pragma", "no-cache")
+        w.Header().Set("Expires", "0")
+        
+        if filepath.Ext(r.URL.Path) == ".m3u8" {
+            w.Header().Set("Content-Type", "application/vnd.apple.mpegurl")
+        } else if filepath.Ext(r.URL.Path) == ".ts" {
+            w.Header().Set("Content-Type", "video/mp2t")
+        }
+        
+        handler.ServeHTTP(w, r)
+    })
 }

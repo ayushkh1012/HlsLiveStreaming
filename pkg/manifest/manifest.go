@@ -95,17 +95,21 @@ func (m *Manifest) UpdateManifest(newSegments []Segment, windowSize int) {
 type ManifestHandler struct {
     mu            sync.Mutex
     windowSize    int
-    sequence      int
+    sequence      uint64
     totalSegments int
     manifestPath  string
+    adDuration    int
+    initialAd     bool
 }
 
 func NewManifestHandler(manifestPath string) *ManifestHandler {
     return &ManifestHandler{
-        windowSize:    10,
+        windowSize:    5,        // Show 5 segments at a time
         sequence:      0,
-        totalSegments: 59,
+        totalSegments: 59,       // Total number of segments
         manifestPath:  manifestPath,
+        adDuration:   30,       // 30 second ads (3 segments of 10 seconds each)
+        initialAd:    true,     // Flag to track initial ad
     }
 }
 
@@ -115,48 +119,71 @@ func (h *ManifestHandler) UpdateManifest() error {
 
     content := "#EXTM3U\n"
     content += "#EXT-X-VERSION:3\n"
-    content += "#EXT-X-TARGETDURATION:12\n"
-    content += fmt.Sprintf("#EXT-X-MEDIA-SEQUENCE:%d\n", h.sequence)
+    content += "#EXT-X-TARGETDURATION:10\n"
+    content += fmt.Sprintf("#EXT-X-MEDIA-SEQUENCE:%d\n\n", h.sequence)
 
+    // Always insert initial ad for sequence 0
+    if h.sequence == 0 {
+        content += "# Pre-roll Ad Break\n"
+        content += "#EXT-X-DISCONTINUITY\n"
+        content += fmt.Sprintf("#EXT-X-CUE-OUT:DURATION=%d\n", h.adDuration)
+        for i := 0; i < 3; i++ {
+            content += "#EXTINF:10.0,\n"
+            content += fmt.Sprintf("/ads/adv1/1080p/segment_%03d.ts\n", i)
+        }
+        content += "#EXT-X-DISCONTINUITY\n"
+        content += "#EXT-X-CUE-IN\n\n"
+        h.initialAd = false
+    }
+
+    // Calculate window range
     startSegment := h.sequence + 1
-    endSegment := startSegment + h.windowSize
+    endSegment := startSegment + uint64(h.windowSize)
 
+    // Add segments within the window
     for i := startSegment; i < endSegment; i++ {
-        segNum := ((i - 1) % h.totalSegments) + 1
+        segNum := ((i - 1) % uint64(h.totalSegments)) + 1
 
-        // Add ad markers every 4 segments
-        if (segNum-1)%4 == 0 && segNum > 1 {
+        // Add regular content segment
+        content += "#EXTINF:10.0,\n"
+        content += fmt.Sprintf("/media/1080p/segment_%03d.ts\n", segNum)
+
+        // Add mid-roll ad break every 10 segments
+        if segNum%10 == 0 {
+            content += fmt.Sprintf("\n# Mid-roll Ad Break %d\n", segNum/10)
             content += "#EXT-X-DISCONTINUITY\n"
-            content += "#EXT-X-CUE-OUT:30.0\n"
-            
-            // Add ad segments
+            content += fmt.Sprintf("#EXT-X-CUE-OUT:DURATION=%d\n", h.adDuration)
             for adSeg := 0; adSeg < 3; adSeg++ {
                 content += "#EXTINF:10.0,\n"
                 content += fmt.Sprintf("/ads/adv1/1080p/segment_%03d.ts\n", adSeg)
             }
-            
             content += "#EXT-X-DISCONTINUITY\n"
-            content += "#EXT-X-CUE-IN\n"
+            content += "#EXT-X-CUE-IN\n\n"
         }
-
-        content += "#EXTINF:10.0,\n"
-        content += fmt.Sprintf("/media/1080p/segment_%03d.ts\n", segNum)
     }
 
-    // Write to file
+    // Ensure manifests directory exists
     if err := os.MkdirAll(filepath.Dir(h.manifestPath), 0755); err != nil {
         return fmt.Errorf("failed to create manifest directory: %v", err)
     }
 
+    // Write manifest file
     if err := os.WriteFile(h.manifestPath, []byte(content), 0644); err != nil {
         return fmt.Errorf("failed to write manifest: %v", err)
     }
 
-    h.sequence = (h.sequence + 1) % h.totalSegments
+    // Update sequence number
+    h.sequence = (h.sequence + 1) % uint64(h.totalSegments)
     return nil
 }
 
 func (h *ManifestHandler) Start() {
+    // Initial update
+    if err := h.UpdateManifest(); err != nil {
+        fmt.Printf("Error in initial manifest update: %v\n", err)
+    }
+
+    // Update manifest every 10 seconds
     ticker := time.NewTicker(10 * time.Second)
     go func() {
         for range ticker.C {
