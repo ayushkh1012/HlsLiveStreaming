@@ -2,6 +2,7 @@ package main
 
 import (
     "fmt"
+    "livehls/pkg/manifest"
     "livehls/utils"
     "log"
     "net/http"
@@ -15,6 +16,10 @@ func main() {
     }
 
     logger := utils.NewLogger()
+
+    // Initialize manifest handler
+    manifestHandler := manifest.NewManifestHandler("manifests/input.m3u8")
+    manifestHandler.Start()
 
     // Set up HTTP server
     // Static file handlers
