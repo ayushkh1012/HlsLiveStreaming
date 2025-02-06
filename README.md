@@ -12,14 +12,6 @@ A Go-based HTTP Live Streaming (HLS) server that supports live streaming with dy
 - Multiple quality variants support
 - Cross-platform compatibility
 
-## Prerequisites
-
-- Go 1.22 or later
-- Docker
-- Kubernetes (optional)
-- Kind (for local Kubernetes testing)
-- Helm (for Kubernetes deployment)
-
 ## Directory Structure Details
 
 ### `/pkg/manifest`
@@ -159,13 +151,9 @@ helm uninstall livehls -n livehls
 
 ### Live Streaming
 - Uses sliding window approach
-- Dynamic manifest updates
-- Proper segment rotation
 - Maintains live streaming specifications
 
 ### Ad Insertion
-- Pre-roll ads at stream start
-- Mid-roll ads every 10 segments
 - SCTE-35 markers for ad boundaries
 - Smooth transitions with discontinuity markers
 
@@ -179,5 +167,5 @@ helm uninstall livehls -n livehls
 - Helm chart for deployment
 - ConfigMap for configuration
 - Volume management
-- Service exposure
 - Health checks
+- Service exposure
