@@ -1,0 +1,29 @@
+replicaCount: 1
+
+image:
+  repository: livehls
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 8080
+  nodePort: 30080
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+volumes:
+  media:
+    path: /app/media
+  ads:
+    path: /app/ads
+  manifests:
+    path: /app/manifests
+  config:
+    path: /app/config 
