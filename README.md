@@ -167,5 +167,5 @@ helm uninstall livehls -n livehls
 - Helm chart for deployment
 - ConfigMap for configuration
 - Volume management
-- Service exposure
 - Health checks
+- Service exposure
