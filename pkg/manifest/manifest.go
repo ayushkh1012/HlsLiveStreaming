@@ -10,7 +10,6 @@ import (
     "github.com/grafov/m3u8"
 )
 
-// Segment represents a media segment in the HLS playlist.
 type Segment struct {
     URI      string
     Duration float64
@@ -18,12 +17,10 @@ type Segment struct {
     SCTE     string
 }
 
-// Manifest wraps an m3u8.MediaPlaylist for additional functionalities.
 type Manifest struct {
     Playlist *m3u8.MediaPlaylist
 }
 
-// LoadManifest loads an HLS media playlist from the specified path.
 func LoadManifest(path string) (*Manifest, error) {
     f, err := os.Open(path)
     if err != nil {
@@ -44,7 +41,6 @@ func LoadManifest(path string) (*Manifest, error) {
     return &Manifest{Playlist: mediaPlaylist}, nil
 }
 
-// Save writes the current state of the media playlist to the specified path.
 func (m *Manifest) Save(path string) error {
     f, err := os.Create(path)
     if err != nil {
@@ -56,7 +52,6 @@ func (m *Manifest) Save(path string) error {
     return err
 }
 
-// InsertSegments inserts new segments into the playlist at the specified sequence ID.
 func (m *Manifest) InsertSegments(seqID uint64, segments []Segment) {
     for _, seg := range segments {
         m.Playlist.AppendSegment(&m3u8.MediaSegment{
@@ -69,8 +64,6 @@ func (m *Manifest) InsertSegments(seqID uint64, segments []Segment) {
         seqID++
     }
 }
-
-// RemoveOldSegments maintains the playlist length within the specified window size.
 func (m *Manifest) RemoveOldSegments(windowSize int) {
     if len(m.Playlist.Segments) > windowSize {
         m.Playlist.Segments = m.Playlist.Segments[len(m.Playlist.Segments)-windowSize:]
@@ -78,7 +71,6 @@ func (m *Manifest) RemoveOldSegments(windowSize int) {
     }
 }
 
-// UpdateManifest updates the playlist by inserting new segments and removing old ones.
 func (m *Manifest) UpdateManifest(newSegments []Segment, windowSize int) {
     for _, seg := range newSegments {
         m.Playlist.AppendSegment(&m3u8.MediaSegment{
@@ -109,7 +101,7 @@ func NewManifestHandler(manifestPath string) *ManifestHandler {
         totalSegments: 59,       // Total number of segments
         manifestPath:  manifestPath,
         adDuration:   30,       // 30 second ads (3 segments of 10 seconds each)
-        initialAd:    true,     // Flag to track initial ad
+        initialAd:    true,
     }
 }
 
@@ -136,7 +128,6 @@ func (h *ManifestHandler) UpdateManifest() error {
         h.initialAd = false
     }
 
-    // Calculate window range
     startSegment := h.sequence + 1
     endSegment := startSegment + uint64(h.windowSize)
 
@@ -162,23 +153,19 @@ func (h *ManifestHandler) UpdateManifest() error {
         }
     }
 
-    // Ensure manifests directory exists
     if err := os.MkdirAll(filepath.Dir(h.manifestPath), 0755); err != nil {
         return fmt.Errorf("failed to create manifest directory: %v", err)
     }
 
-    // Write manifest file
     if err := os.WriteFile(h.manifestPath, []byte(content), 0644); err != nil {
         return fmt.Errorf("failed to write manifest: %v", err)
     }
 
-    // Update sequence number
     h.sequence = (h.sequence + 1) % uint64(h.totalSegments)
     return nil
 }
 
 func (h *ManifestHandler) Start() {
-    // Initial update
     if err := h.UpdateManifest(); err != nil {
         fmt.Printf("Error in initial manifest update: %v\n", err)
     }
