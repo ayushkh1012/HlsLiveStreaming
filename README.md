@@ -113,12 +113,6 @@ ads:
 go build -o livehls main.go
 ```
 
-### Running Tests
-
-```bash
-go test ./...
-```
-
 ## Docker Support
 
 Build the image:
