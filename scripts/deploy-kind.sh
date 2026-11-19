@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Create Kind cluster if it doesn't exist
+# Create Kind cluster if it does not exist
 if ! kind get clusters | grep -q "livehls"; then
     kind create cluster --name livehls --config kind-config.yaml
 fi
